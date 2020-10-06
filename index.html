@@ -1,0 +1,121 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>indexDB</title>
+</head>
+<body>
+    DB
+    <input type="text" value="gallery" id="txtDB">
+    Version
+    <input type="text" value="1" id="txtVersion">
+    <button id="btnCreateDB"> Create DB</button>
+     user ID
+    <input type="text" id="userId">
+    User Name
+    <input type="text" id="userName">
+    <button id="btnaddUser">add User</button>
+    <button id="btnViewUsers">View Users</button>
+
+    <ul id="allUsers">
+
+    </ul>
+
+    <script>
+
+       let db = null;
+   
+       const btnCreateDB = document.getElementById('btnCreateDB');
+
+        btnCreateDB.addEventListener('click', createDB);
+
+        const btnViewUsers = document.getElementById('btnViewUsers')
+        btnViewUsers.addEventListener('click',viewUsers)
+
+        const allUsers = document.getElementById('allUsers');
+    
+
+
+
+
+     function createDB() {
+        dbName = document.getElementById('txtDB').value;
+        dbVersion = document.getElementById('txtVersion').value;
+
+        // open new indexedDB
+        const request = indexedDB.open(dbName,dbVersion)
+
+        // on upgrade
+        request.onupgradeneeded = e => {
+
+            // get the database name 
+             db = e.target.result;
+
+            // create objectStore [table] users table 
+
+            const users = db.createObjectStore('users', {keyPath: 'id'})
+            alert(db.name, db.Version)
+        }
+        // on success 
+        request.onsuccess = e => {
+             db = e.target.result;
+            alert( db.version)
+
+        }
+
+        request.onerror = e => {
+            alert( `${e.target.error}`)
+
+        }
+     }
+
+     const btnaddUser = document.getElementById('btnaddUser');
+        btnaddUser.addEventListener('click',() => {
+            createDB()
+            addUser()
+        })
+
+        function addUser () {
+
+            const userId = document.getElementById('userId').value
+            const userName = document.getElementById('userName').value
+            const user = {
+                   id : userId,
+                   userName: userName
+            }
+           // write to the table of users
+            const tx = db.transaction('users', 'readwrite')
+            tx.onerror = e => {
+                alert(e.target.error)
+            }
+            const usersTable = tx.objectStore('users')
+            usersTable.add(user)
+            console.log(user)
+        } 
+
+        function viewUsers() {
+            const tx = db.transaction('users');
+            const usersTable = tx.objectStore('users')
+            const request = usersTable.openCursor()
+
+            request.onsuccess = e => {
+
+                const cursor = e.target.result;
+                if(cursor) {
+
+
+
+                    let li = document.createElement('li')
+                    li.textContent =  cursor.value.id + " ----- " + cursor.value.userName
+                     allUsers.appendChild(li);
+
+                    // do something with the cursor 
+
+                    cursor.continue()
+                }
+            }
+        }
+ 
+    </script>
+</body>
+</html>
